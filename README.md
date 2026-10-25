@@ -8,7 +8,7 @@
 The official TypeScript SDK for the [IMPROJ public API](https://improj.com/developers): a typed client for every endpoint, async-iterator pagination, automatic idempotency keys, safe retries, timeouts, the two-step upload helper and webhook signature verification.
 
 - **Zero runtime dependencies.** Native `fetch`, Web Crypto or `node:crypto`.
-- **Node.js 18+**, Deno, Bun, Cloudflare Workers, Vercel Edge and modern browsers (through your own backend; see below).
+- **Node.js 20+**, Deno, Bun, Cloudflare Workers, Vercel Edge and modern browsers (through your own backend; see below).
 - **ESM and CommonJS** builds with type declarations. Published with npm provenance.
 
 > [!WARNING]
@@ -226,8 +226,16 @@ npm ci
 npm run lint && npm run typecheck
 npm test              # vitest, coverage thresholds enforced
 npm run build
-npm run test:smoke    # the built package on the current Node.js (CI: 18, 20, 22, 24)
+npm run test:smoke    # the built package on the current Node.js (CI: 20, 22, 24)
 npm run check:package # publint + Are The Types Wrong
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). Licensed under the [MIT License](LICENSE).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+The code and documentation in this repository are released under the [MIT License](LICENSE), copyright Kodvalley.
+
+The `info.license` field of the IMPROJ OpenAPI description (Proprietary, see https://improj.com/terms) covers the IMPROJ service itself, not this repository. Using the API is subject to the IMPROJ terms; using this code is subject to the MIT License.
+
+Contact: info@kodvalley.com. Security reports: see [SECURITY.md](SECURITY.md).

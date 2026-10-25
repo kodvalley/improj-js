@@ -1,7 +1,5 @@
 # Security policy
 
-<!-- TODO(founder): confirm the reporting address below (default: security@improj.com) and enable GitHub private vulnerability reporting for kodvalley/improj-js. -->
-
 ## Reporting a vulnerability
 
 Please do **not** open a public issue, pull request or discussion for a security problem.
@@ -9,7 +7,7 @@ Please do **not** open a public issue, pull request or discussion for a security
 Report it privately, by either:
 
 - GitHub: **Security > Report a vulnerability** on [kodvalley/improj-js](https://github.com/kodvalley/improj-js/security/advisories/new) (private vulnerability reporting), or
-- email: **security@improj.com**
+- email: **info@kodvalley.com**
 
 Include what you found, the affected version or commit, steps to reproduce, and the impact you expect. If you send a proof of concept, use your own test account and data. **Never include a real API token, webhook secret or personal data**; if one was exposed, revoke it in IMPROJ (Settings > Developers) first.
 

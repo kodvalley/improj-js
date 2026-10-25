@@ -1,6 +1,6 @@
 # Contributing to IMPROJ JavaScript SDK
 
-Thank you for helping. This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+Thank you for helping. This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). Questions about contributing, conduct reports and security reports all go to **info@kodvalley.com** (security reports privately, see below).
 
 ## Security first
 
@@ -16,7 +16,7 @@ npm run lint
 npm run typecheck
 npm test             # vitest with coverage (thresholds enforced)
 npm run build        # ESM + CJS + types into dist/
-npm run test:smoke   # node:test against dist/ (runs on Node 18+)
+npm run test:smoke   # node:test against dist/ (runs on Node 20+)
 ```
 
 ## Pull requests

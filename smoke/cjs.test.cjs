@@ -1,4 +1,4 @@
-// Runs the built CommonJS package on the current Node.js version (18+).
+// Runs the built CommonJS package on the current Node.js version (20+).
 const { test } = require("node:test");
 const sdk = require("@kodvalley/improj");
 const hooks = require("@kodvalley/improj/webhooks/node");

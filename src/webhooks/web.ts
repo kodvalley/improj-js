@@ -1,7 +1,7 @@
 /**
  * Webhook signature verification with the Web Crypto API: browsers' service
- * workers, Cloudflare Workers, Vercel Edge, Deno, Bun and Node.js 19+.
- * Every function is async. On Node.js 18 use `@kodvalley/improj/webhooks/node`.
+ * workers, Cloudflare Workers, Vercel Edge, Deno, Bun and Node.js 20+.
+ * Every function is async. For a synchronous API on Node.js use `@kodvalley/improj/webhooks/node`.
  *
  * ```ts
  * import { constructEvent } from "@kodvalley/improj/webhooks";
@@ -40,7 +40,7 @@ export type { WebhookEvent } from "../types.js";
 
 function subtle(): SubtleCrypto {
   const s = (globalThis as { crypto?: { subtle?: SubtleCrypto } }).crypto?.subtle;
-  if (!s) throw new Error("Web Crypto is not available here; on Node.js 18 import @kodvalley/improj/webhooks/node instead.");
+  if (!s) throw new Error("Web Crypto is not available here; import @kodvalley/improj/webhooks/node instead.");
   return s;
 }
 

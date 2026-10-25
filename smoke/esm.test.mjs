@@ -1,4 +1,4 @@
-// Runs the built ES module package on the current Node.js version (18+).
+// Runs the built ES module package on the current Node.js version (20+).
 import { test } from "node:test";
 import { createRequire } from "node:module";
 import * as sdk from "@kodvalley/improj";

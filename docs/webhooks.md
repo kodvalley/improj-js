@@ -21,8 +21,8 @@ Two entry points:
 
 | Import | Runtime | API |
 |---|---|---|
-| `@kodvalley/improj/webhooks/node` | Node.js 18+ | synchronous, `node:crypto` (`timingSafeEqual`) |
-| `@kodvalley/improj/webhooks` | Browsers' workers, Cloudflare Workers, Vercel Edge, Deno, Bun, Node.js 19+ | async, Web Crypto (`crypto.subtle.verify`) |
+| `@kodvalley/improj/webhooks/node` | Node.js 20+ | synchronous, `node:crypto` (`timingSafeEqual`) |
+| `@kodvalley/improj/webhooks` | Browsers' workers, Cloudflare Workers, Vercel Edge, Deno, Bun, Node.js 20+ | async, Web Crypto (`crypto.subtle.verify`) |
 
 Both export `constructEvent`, `verifySignature`, `assertValidSignature`, `computeSignature`, `signatureHeader` (for your own tests), `parseSignatureHeader`, `WEBHOOK_HEADERS` and `ImprojSignatureVerificationError` (with a `reason`: `missing_header`, `malformed_header`, `timestamp_outside_tolerance`, `no_matching_signature`, `invalid_payload`).
 

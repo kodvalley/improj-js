@@ -144,10 +144,11 @@ describe("idempotency keys", () => {
     expect(f.calls[0]!.headers.has("Idempotency-Key")).toBe(false);
   });
 
-  it("generates keys through node:crypto when Web Crypto is missing (Node 18)", async () => {
+  it("generates keys with Web Crypto and explains when it is missing", async () => {
+    expect(await randomKey()).toMatch(/^[0-9a-f-]{36}$/);
     vi.stubGlobal("crypto", undefined);
     try {
-      expect(await randomKey()).toMatch(/^[0-9a-f-]{36}$/);
+      await expect(randomKey()).rejects.toMatchObject({ code: "CONFIGURATION" });
     } finally {
       vi.unstubAllGlobals();
     }

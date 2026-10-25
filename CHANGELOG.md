@@ -20,7 +20,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Two-step upload helper `files.upload()`; the bytes always go to `<baseUrl>/uploads/<id>`.
 - Webhook verification for Node.js (`@kodvalley/improj/webhooks/node`) and Web Crypto runtimes (`@kodvalley/improj/webhooks`), with raw-body guidance for Express, Next.js, Hono and Fastify.
 - Safety checks: no token in browsers without `dangerouslyAllowBrowser`, no token over plain http, no redirects, no cookies with a token, masked token in `toJSON()` and `util.inspect()`.
-- ESM and CommonJS builds with type declarations; Node.js 18+.
+- ESM and CommonJS builds with type declarations; Node.js 20+.
 
 [Unreleased]: https://github.com/kodvalley/improj-js/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/kodvalley/improj-js/releases/tag/v0.1.0

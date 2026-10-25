@@ -190,13 +190,11 @@ export function pathId(value: unknown, name: string): string {
   throw configError(`${name} must be a positive integer id.`);
 }
 
-/** Random UUID v4 for Idempotency-Key, from Web Crypto or, on Node 18, node:crypto. */
+/** Random UUID v4 for Idempotency-Key, from Web Crypto (global on Node.js 20+, Deno, Bun, edge runtimes and browsers). */
 export async function randomKey(): Promise<string> {
   const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
-  if (c?.randomUUID) return c.randomUUID();
-  const mod = "node:crypto";
-  const nodeCrypto = (await import(/* @vite-ignore */ /* webpackIgnore: true */ mod)) as { randomUUID: () => string };
-  return nodeCrypto.randomUUID();
+  if (!c?.randomUUID) throw configError("Web Crypto (crypto.randomUUID) is not available; use Node.js 20+ or pass idempotencyKey yourself.");
+  return c.randomUUID();
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
@@ -266,7 +264,7 @@ export class HttpClient {
     this.#maxRetryAfterMs = nonNegative(options.maxRetryAfterMs, 60_000, "maxRetryAfterMs");
     this.#autoIdempotency = options.autoIdempotencyKeys ?? true;
     const f = options.fetch ?? (globalThis as { fetch?: typeof fetch }).fetch;
-    if (typeof f !== "function") throw configError("No fetch implementation found; pass options.fetch (Node 18+ has one built in).");
+    if (typeof f !== "function") throw configError("No fetch implementation found; pass options.fetch (Node.js 20+ has one built in).");
     this.#fetch = options.fetch ? f : f.bind(globalThis);
     this.#headers = checkHeaders(options.headers, "headers");
     this.#credentials = options.credentials ?? (token ? "omit" : "same-origin");

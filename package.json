@@ -12,14 +12,15 @@
   ],
   "homepage": "https://github.com/kodvalley/improj-js#readme",
   "bugs": {
-    "url": "https://github.com/kodvalley/improj-js/issues"
+    "url": "https://github.com/kodvalley/improj-js/issues",
+    "email": "info@kodvalley.com"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kodvalley/improj-js.git"
   },
   "license": "MIT",
-  "author": "Kodvalley <dev@improj.com>",
+  "author": "Kodvalley <info@kodvalley.com> (https://improj.com)",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/cjs/index.js",
@@ -77,7 +78,7 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=20.0.0"
   },
   "publishConfig": {
     "access": "public",

@@ -5,7 +5,8 @@
     "version": "2026-10-24",
     "description": "The IMPROJ public REST API. JSON only. Authenticate with a personal access token (improj_pat_...) or an organisation token (improj_org_...) in the Authorization header as a Bearer token. Every request acts as the token's owner with exactly the permissions the owner has in the app, narrowed by the token's scopes and limits. Rate limits per minute: 300 requests and 60 writes per token, 30 uploads per token, 600 per client address. Errors are RFC 7807 application/problem+json with a stable code. Lists are cursor paginated.",
     "contact": {
-      "name": "IMPROJ",
+      "name": "Kodvalley",
+      "email": "info@kodvalley.com",
       "url": "https://improj.com/developers"
     },
     "license": {
