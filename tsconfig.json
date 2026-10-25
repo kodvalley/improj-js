@@ -15,6 +15,7 @@
     "verbatimModuleSyntax": false,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "newLine": "lf",
     "resolveJsonModule": true,
     "noEmit": true
   },
