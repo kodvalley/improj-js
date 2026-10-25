@@ -313,12 +313,11 @@ export interface CalendarEventCreate {
 
 export type CalendarEventUpdate = Partial<CalendarEventCreate>;
 
-/**
- * An item of your own calendar (`GET /calendar`). Not yet described in
- * openapi.json; this shape follows what the API answers today.
- */
+/** An item of your own calendar (`GET /calendar`, schema CalendarItem). */
 export interface CalendarItem {
+  /** Stable across sources: `<source>:<id>`. */
   id: string;
+  /** personal, project_event, activity, meeting_note, meeting, reminder, milestone, poll, task or external. */
   source: string | null;
   title: string | null;
   start_date: DateString | null;
@@ -330,6 +329,7 @@ export interface CalendarItem {
   location: string | null;
   meeting_url: string | null;
   status: string | null;
+  /** null for a personal item (never sent to a limited or organisation token). */
   project: { id: number; name: string | null } | null;
 }
 
@@ -472,8 +472,8 @@ export interface WebhookEvent {
 }
 
 // ─── AI agents (Enterprise) ─────────────────────────────────────────────────
-// Not yet described in openapi.json; these shapes follow what the API answers
-// today and use camelCase field names, unlike the rest of the API.
+// Schemas Agent, AgentItem and AgentNote. These routes keep the camelCase field
+// names of their earlier API, unlike the rest of the API.
 
 export interface Agent {
   id: number;
@@ -481,18 +481,21 @@ export interface Agent {
   organization: { id: number; name: string | null };
   status: string;
   pausedReason: string | null;
+  /** Whether you are one of the people the agent reports to. */
   principal: boolean;
 }
 
 export interface AgentItem {
   id: number;
+  /** briefing, report, alert, forecast, analysis, draft, proposal, note, tuning, answer or notice. */
   kind: string;
   severity: string;
   title: string;
   body: string;
   project: { id: number; name: string | null } | null;
   citations: Array<{ label: string; path: string }>;
-  aiGenerated: boolean;
+  aiGenerated: true;
+  /** The AI notice to show next to the item. */
   notice: string;
   status: string;
   read: boolean;
@@ -502,7 +505,17 @@ export interface AgentItem {
 export interface AgentItemListParams {
   /** 1 to 50 (default 20). */
   limit?: number;
+  /** A next_cursor from a previous page (opaque, signed). The legacy numeric cursor is still accepted. */
   cursor?: string;
+}
+
+/** The wire shape of GET /agents/{agent_id}/items. */
+export interface AgentItemListResponse {
+  data: AgentItem[];
+  /** Opaque, signed cursor of the next page; null on the last page. Preferred. */
+  next_cursor: string | null;
+  /** Legacy numeric cursor, kept for earlier clients. */
+  nextCursor: number | null;
 }
 
 export type AgentNoteKind = "handoff" | "dependency" | "risk" | "question";
@@ -514,7 +527,6 @@ export type AgentNoteRefType =
   | "budget_line"
   | "expense"
   | "risk"
-  | "file_section"
   | "milestone"
   | "partner"
   | "work_package"
@@ -526,8 +538,8 @@ export interface AgentNoteCreate {
   kind: AgentNoteKind;
   /** Up to 500 characters. */
   text: string;
-  /** A project the agent reads. */
-  folderId?: number;
+  /** A project the agent reads (camelCase, as in the earlier agent API). */
+  folderId?: number | null;
   /** Up to 10 references inside that project. */
   refs?: Array<{ type: AgentNoteRefType; id: number }>;
 }

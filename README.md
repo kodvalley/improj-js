@@ -66,7 +66,10 @@ Give each integration its own token with the fewest scopes, a project list, an e
 | `headers` | none | Extra headers (for example a CSRF header for your proxy). `Authorization` and `Cookie` are refused. |
 | `onResponse` | none | Called after every attempt with status, request id, rate limits and timing; never with credentials. |
 
-Every method takes per-request options as its last argument: `{ idempotencyKey, timeoutMs, maxRetries, signal, headers }`.
+Every method takes per-request options as its last argument: `{ idempotencyKey, requestId, apiVersion, timeoutMs, maxRetries, signal, headers }`.
+
+- `requestId` is sent as `X-Request-Id` (8 to 64 characters of `A-Z a-z 0-9 . _ : -`). The API echoes it back and puts it in an error's `requestId`, so you can follow one call through your logs and IMPROJ support.
+- `apiVersion` overrides the client's `IMPROJ-API-Version` pin for one request (`null` sends none). An unsupported version answers `400 API_VERSION_UNSUPPORTED`.
 
 ## Resources
 
@@ -132,13 +135,19 @@ try {
 | `ImprojBadRequestError` | 400 (`INVALID_INPUT` with `errors[]`, `API_CURSOR_INVALID`, ...) |
 | `ImprojAuthenticationError` | 401 |
 | `ImprojPermissionError` | 403 (`API_SCOPE_MISSING`, `VIEWER_READ_ONLY`, ...) |
-| `ImprojNotFoundError` | 404 |
+| `ImprojNotFoundError` | 404 (`NOT_FOUND`, `API_UPLOAD_EXPIRED`) |
+| `ImprojMethodNotAllowedError` | 405 (`API_METHOD_NOT_ALLOWED`) |
 | `ImprojConflictError` | 409 (`IDEMPOTENCY_KEY_IN_USE`) |
+| `ImprojPayloadTooLargeError` | 413 (`API_PAYLOAD_TOO_LARGE`, `FILE_TOO_LARGE_FOR_PLAN`) |
+| `ImprojUnsupportedMediaTypeError` | 415 (`API_UNSUPPORTED_MEDIA_TYPE`) |
 | `ImprojUnprocessableError` | 422 (`IDEMPOTENCY_KEY_REUSED`) |
-| `ImprojRateLimitError` | 429 |
-| `ImprojServerError` | 5xx |
+| `ImprojRateLimitError` | 429 (`RATE_LIMITED`) |
+| `ImprojServerError` | 5xx (`SOMETHING_WENT_WRONG`) |
+| `ImprojServiceUnavailableError` | 503 (`DB_UNAVAILABLE`, `SERVER_BUSY`), a subclass of `ImprojServerError` |
 | `ImprojConnectionError` | no answer (`CONNECTION_ERROR`, `ABORTED`) |
 | `ImprojTimeoutError` | `timeoutMs` elapsed (`TIMEOUT`) |
+
+`error.code` is typed as `ImprojErrorCode`: every code the API documents is listed in `API_ERROR_CODES` (a contract test keeps it in step with openapi.json), and new codes from the API are still accepted.
 
 Error messages and fields pass through `redact()`, so a token or webhook secret never appears in them; `error.toJSON()` is safe for structured logs.
 

@@ -4,6 +4,7 @@ import type {
   Agent,
   AgentItem,
   AgentItemListParams,
+  AgentItemListResponse,
   AgentNoteCreate,
   AgentNoteResult,
   Id,
@@ -59,19 +60,20 @@ export class AgentsResource extends Resource {
     return this.getOne<Agent[]>("/agents", options);
   }
 
-  /** What an agent sent you, newest first (1 to 50 per page). */
+  /** What an agent sent you, newest first (1 to 50 per page). Follows the signed next_cursor. */
   items(agentId: Id, params?: AgentItemListParams, options?: RequestOptions): PagePromise<AgentItem> {
     const path = `/agents/${pathId(agentId, "agentId")}/items`;
     const { cursor: start, limit } = params ?? {};
     return new PagePromise<AgentItem>(async (cursor) => {
-      // This older route answers { data, nextCursor } with a numeric cursor.
-      const body = await this.http.request<{ data: AgentItem[]; nextCursor?: number | string | null; next_cursor?: string | null }>({
+      // The signed next_cursor is preferred; servers older than the 2026-10-24
+      // contract only sent the numeric nextCursor, which is still accepted.
+      const body = await this.http.request<Partial<AgentItemListResponse> & { data: AgentItem[] }>({
         method: "GET",
         path,
         query: { cursor: cursor ?? start, limit },
         options,
       });
-      const next = body?.next_cursor ?? body?.nextCursor ?? null;
+      const next = body && "next_cursor" in body ? body.next_cursor : (body?.nextCursor ?? null);
       return { data: body?.data, next_cursor: next === null || next === undefined ? null : String(next) };
     });
   }

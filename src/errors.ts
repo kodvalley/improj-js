@@ -27,9 +27,67 @@ export interface RateLimitInfo {
   policy: string | null;
 }
 
+/**
+ * Error codes the API documents (openapi.json, components.responses), plus the
+ * SDK's own codes for failures without an answer. The API may add codes; the
+ * type stays open so new ones are still accepted.
+ */
+export const API_ERROR_CODES = [
+  // 400
+  "INVALID_INPUT",
+  "API_CURSOR_INVALID",
+  "API_VERSION_UNSUPPORTED",
+  "FILE_TYPE_NOT_ALLOWED",
+  "API_UPLOAD_SIZE_MISMATCH",
+  "WEBHOOK_URL_INVALID",
+  // 401
+  "API_TOKEN_MISSING",
+  "API_TOKEN_INVALID",
+  // 403
+  "API_SCOPE_MISSING",
+  "API_IP_NOT_ALLOWED",
+  "API_ORIGIN_NOT_ALLOWED",
+  "API_NOT_IN_PLAN",
+  "API_DISABLED",
+  "STORAGE_QUOTA_FULL",
+  "VIEWER_READ_ONLY",
+  "PROJECT_ARCHIVED_READ_ONLY",
+  "NOT_ALLOWED",
+  "AGENT_NOT_ENTITLED",
+  "API_WEBHOOK_LIMIT_REACHED",
+  // 404
+  "NOT_FOUND",
+  "API_UPLOAD_EXPIRED",
+  // 405
+  "API_METHOD_NOT_ALLOWED",
+  // 409
+  "IDEMPOTENCY_KEY_IN_USE",
+  // 413
+  "API_PAYLOAD_TOO_LARGE",
+  "FILE_TOO_LARGE_FOR_PLAN",
+  // 415
+  "API_UNSUPPORTED_MEDIA_TYPE",
+  // 422
+  "IDEMPOTENCY_KEY_REUSED",
+  // 429
+  "RATE_LIMITED",
+  // 500, 503
+  "SOMETHING_WENT_WRONG",
+  "DB_UNAVAILABLE",
+  "SERVER_BUSY",
+] as const;
+
+/** The SDK's own codes, for failures detected before or without an answer. */
+export const SDK_ERROR_CODES = ["CONFIGURATION", "CONNECTION_ERROR", "ABORTED", "TIMEOUT", "INVALID_RESPONSE", "NO_MORE_PAGES", "PAGINATION_LOOP"] as const;
+
+export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
+export type SdkErrorCode = (typeof SDK_ERROR_CODES)[number];
+/** A known code, or any other string the API adds later (and HTTP_<status> without a problem body). */
+export type ImprojErrorCode = ApiErrorCode | SdkErrorCode | (string & {});
+
 export interface ImprojErrorInit {
   status: number;
-  code: string;
+  code: ImprojErrorCode;
   message: string;
   requestId?: string | null;
   problem?: Partial<Problem> | null;
@@ -53,7 +111,7 @@ export interface ImprojErrorInit {
 export class ImprojError extends Error {
   override readonly name: string = "ImprojError";
   readonly status: number;
-  readonly code: string;
+  readonly code: ImprojErrorCode;
   readonly requestId: string | null;
   readonly type: string | null;
   readonly title: string | null;
@@ -125,13 +183,29 @@ export class ImprojConflictError extends ImprojError {
 export class ImprojUnprocessableError extends ImprojError {
   override readonly name = "ImprojUnprocessableError";
 }
+/** 405: the path exists, but not with this method (API_METHOD_NOT_ALLOWED). */
+export class ImprojMethodNotAllowedError extends ImprojError {
+  override readonly name = "ImprojMethodNotAllowedError";
+}
+/** 413: the body is too large (API_PAYLOAD_TOO_LARGE) or the file exceeds the plan (FILE_TOO_LARGE_FOR_PLAN). */
+export class ImprojPayloadTooLargeError extends ImprojError {
+  override readonly name = "ImprojPayloadTooLargeError";
+}
+/** 415: wrong Content-Type or Content-Encoding (API_UNSUPPORTED_MEDIA_TYPE). */
+export class ImprojUnsupportedMediaTypeError extends ImprojError {
+  override readonly name = "ImprojUnsupportedMediaTypeError";
+}
 /** 429: rate limited; `retryAfter` says how long to wait. */
 export class ImprojRateLimitError extends ImprojError {
   override readonly name = "ImprojRateLimitError";
 }
 /** 5xx: a server-side failure; safe requests are retried before this is thrown. */
 export class ImprojServerError extends ImprojError {
-  override readonly name = "ImprojServerError";
+  override readonly name: string = "ImprojServerError";
+}
+/** 503: temporarily unavailable (DB_UNAVAILABLE, SERVER_BUSY); safe requests are retried before this is thrown. */
+export class ImprojServiceUnavailableError extends ImprojServerError {
+  override readonly name = "ImprojServiceUnavailableError";
 }
 /** No answer: DNS, TLS, connection reset, or the request was aborted by the caller. */
 export class ImprojConnectionError extends ImprojError {
@@ -169,12 +243,20 @@ export function errorClassFor(status: number): typeof ImprojError {
       return ImprojPermissionError;
     case 404:
       return ImprojNotFoundError;
+    case 405:
+      return ImprojMethodNotAllowedError;
     case 409:
       return ImprojConflictError;
+    case 413:
+      return ImprojPayloadTooLargeError;
+    case 415:
+      return ImprojUnsupportedMediaTypeError;
     case 422:
       return ImprojUnprocessableError;
     case 429:
       return ImprojRateLimitError;
+    case 503:
+      return ImprojServiceUnavailableError;
     default:
       return status >= 500 ? ImprojServerError : ImprojError;
   }

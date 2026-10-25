@@ -28,8 +28,16 @@ export interface RequestOptions {
   maxRetries?: number;
   /** Abort the request (and any pending retry). */
   signal?: AbortSignal;
-  /** Extra headers for this request. Authorization and Cookie cannot be set here. */
+  /** Extra headers for this request. Authorization, Cookie and the headers below cannot be set here. */
   headers?: Record<string, string>;
+  /**
+   * Your own id for this request, sent as X-Request-Id (8 to 64 characters of
+   * A-Z a-z 0-9 . _ : -). The API echoes it in X-Request-Id and in an
+   * error's requestId, so you can correlate its logs with yours.
+   */
+  requestId?: string;
+  /** IMPROJ-API-Version for this request only; null sends none. Default: the client's apiVersion. */
+  apiVersion?: string | null;
 }
 
 /** What the client reports to `onResponse` after every attempt. Never contains credentials. */
@@ -93,8 +101,10 @@ export interface ApiRequest {
 const HEADER_VALUE = /^[\t\x20-\x7e\x80-\xff]*$/;
 const HEADER_NAME = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
 const IDEMPOTENCY_KEY = /^[\x21-\x7e]{1,255}$/;
+const REQUEST_ID = /^[A-Za-z0-9._:-]{8,64}$/;
+const API_VERSION_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
 const TOKEN_SHAPE = /^[\x21-\x7e]{8,512}$/;
-const FORBIDDEN_HEADERS = new Set(["authorization", "cookie", "host", "content-length"]);
+const FORBIDDEN_HEADERS = new Set(["authorization", "cookie", "host", "content-length", "x-request-id", "improj-api-version", "idempotency-key"]);
 const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
 
 /** A configuration problem detected before any request is sent. */
@@ -248,7 +258,7 @@ export class HttpClient {
     }
     this.#token = token;
     this.#apiVersion = options.apiVersion === undefined ? API_VERSION : options.apiVersion;
-    if (this.#apiVersion !== null && !/^\d{4}-\d{2}-\d{2}$/.test(this.#apiVersion)) {
+    if (this.#apiVersion !== null && !API_VERSION_SHAPE.test(this.#apiVersion)) {
       throw configError("apiVersion must look like 2026-10-24.");
     }
     this.#timeoutMs = positive(options.timeoutMs, 30_000, "timeoutMs");
@@ -296,7 +306,13 @@ export class HttpClient {
 
     const headers: Record<string, string> = { Accept: "application/json", ...this.#headers, ...checkHeaders(opts.headers, "options.headers") };
     if (this.#token) headers.Authorization = `Bearer ${this.#token}`;
-    if (this.#apiVersion) headers["IMPROJ-API-Version"] = this.#apiVersion;
+    const apiVersion = opts.apiVersion === undefined ? this.#apiVersion : opts.apiVersion;
+    if (apiVersion !== null && !API_VERSION_SHAPE.test(apiVersion)) throw configError("apiVersion must look like 2026-10-24.");
+    if (apiVersion) headers["IMPROJ-API-Version"] = apiVersion;
+    if (opts.requestId !== undefined) {
+      if (!REQUEST_ID.test(opts.requestId)) throw configError("requestId must be 8 to 64 characters of A-Z a-z 0-9 . _ : -");
+      headers["X-Request-Id"] = opts.requestId;
+    }
     if (this.#userAgent) headers["User-Agent"] = this.#userAgent;
 
     let idempotencyKey: string | undefined;
