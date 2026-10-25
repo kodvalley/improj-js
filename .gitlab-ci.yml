@@ -1,0 +1,110 @@
+# GitLab CI for kodvalley/improj-js: lint, types, tests with coverage, the
+# built package on Node 18 to 24, SAST, dependency scanning, secret detection
+# and an optional npm publish with provenance. Images are pinned by digest.
+#
+# Releases are published from GitHub by default. To publish from GitLab
+# instead, configure npm trusted publishing for this project (or a protected,
+# masked NPM_TOKEN variable) and run the manual "publish" job on a tag.
+
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+stages: [test, runtime, release]
+
+variables:
+  NODE_18: "node:18-bookworm-slim@sha256:f9ab18e354e6855ae56ef2b290dd225c1e51a564f87584b9bd21dd651838830e"
+  NODE_20: "node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0"
+  NODE_22: "node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d"
+  NODE_24: "node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205"
+  GITLEAKS_IMAGE: "zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
+
+default:
+  interruptible: true
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+.npm:
+  cache:
+    key:
+      files: [package-lock.json]
+    paths: [.npm/]
+  before_script:
+    - npm ci --ignore-scripts --cache .npm --prefer-offline
+
+test:
+  stage: test
+  extends: .npm
+  image: $NODE_IMAGE
+  parallel:
+    matrix:
+      - NODE_IMAGE: [$NODE_22, $NODE_24]
+  script:
+    - npm audit --audit-level=low
+    - npm audit signatures
+    - npm run lint
+    - npm run typecheck
+    - npm test
+  coverage: '/^Lines\s*:\s*(\d+(?:\.\d+)?)%/'
+  artifacts:
+    when: always
+    expire_in: 3 days
+    paths: [coverage/]
+
+build:
+  stage: test
+  extends: .npm
+  image: $NODE_24
+  script:
+    - npm run build
+    - npm run check:package
+  artifacts:
+    expire_in: 3 days
+    paths: [dist/]
+
+runtime:
+  stage: runtime
+  image: $NODE_IMAGE
+  needs:
+    - job: build
+      artifacts: true
+  parallel:
+    matrix:
+      - NODE_IMAGE: [$NODE_18, $NODE_20, $NODE_22, $NODE_24]
+  script:
+    - node --test smoke/esm.test.mjs smoke/cjs.test.cjs
+
+gitleaks:
+  stage: test
+  image:
+    name: $GITLEAKS_IMAGE
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 .
+
+publish:
+  stage: release
+  extends: .npm
+  image: $NODE_24
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+      when: manual
+  environment: npm
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+    NPM_ID_TOKEN:
+      aud: "npm:registry.npmjs.org"
+  script:
+    - test "v$(node -p 'require("./package.json").version')" = "$CI_COMMIT_TAG"
+    - npm run build
+    - npm publish --provenance --access public --ignore-scripts

@@ -1,0 +1,24 @@
+# gitleaks configuration: the default rules plus IMPROJ credentials.
+# CI runs a pinned, checksum-verified gitleaks release (.github/workflows/secret-scan.yml).
+title = "IMPROJ"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "improj-api-token"
+description = "IMPROJ personal or organisation API token"
+regex = '''\bimproj_(?:pat|org)_[A-Za-z0-9]{49}\b'''
+keywords = ["improj_pat_", "improj_org_"]
+
+[[rules]]
+id = "improj-legacy-api-token"
+description = "IMPROJ legacy API token"
+regex = '''\bimp_[A-Za-z0-9]{40}\b'''
+keywords = ["imp_"]
+
+[[rules]]
+id = "improj-webhook-secret"
+description = "IMPROJ webhook signing secret"
+regex = '''\bwhsec_[A-Za-z0-9_-]{32,}\b'''
+keywords = ["whsec_"]

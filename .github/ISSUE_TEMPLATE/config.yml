@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/kodvalley/improj-js/security/advisories/new
+    about: Please report security problems privately, never in a public issue.
+  - name: IMPROJ API documentation
+    url: https://improj.com/developers
+    about: Reference, guides and status of the IMPROJ public API.

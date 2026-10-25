@@ -1,0 +1,84 @@
+# Publishes @kodvalley/improj to npm with provenance when a maintainer pushes
+# a signed tag vX.Y.Z that matches package.json.
+#
+# Setup (once, by the npm organisation owner):
+# - Preferred: npm trusted publishing (OIDC). On npmjs.com, package settings >
+#   Trusted publishers > GitHub Actions: repository kodvalley/improj-js,
+#   workflow release.yml, environment "npm". No token is stored anywhere.
+# - Otherwise: an npm granular access token limited to this package, stored as
+#   the NPM_TOKEN secret of the "npm" environment only.
+# - Settings > Environments > "npm": required reviewers, and deployment
+#   branches and tags limited to v*.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm audit signatures
+      - name: The tag matches package.json
+        env:
+          TAG: ${{ github.ref_name }}
+        run: test "v$(node -p 'require("./package.json").version')" = "$TAG"
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run check:package
+      - run: node --test smoke/esm.test.mjs smoke/cjs.test.cjs
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Publish with provenance
+        run: npm publish --provenance --access public --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --title "$TAG" --notes "See CHANGELOG.md. Published to npm with provenance." --verify-tag

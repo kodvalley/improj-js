@@ -1,0 +1,8 @@
+# TODO(founder): create the @kodvalley/maintainers team (or replace it with named maintainers).
+# Code owners review every pull request; branch protection should require their approval.
+* @kodvalley/maintainers
+
+# Changes to CI, release and security policy need a maintainer as well.
+/.github/ @kodvalley/maintainers
+/.gitlab-ci.yml @kodvalley/maintainers
+/SECURITY.md @kodvalley/maintainers

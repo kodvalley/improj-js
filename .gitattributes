@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tgz binary
+*.phar binary
+
+package-lock.json linguist-generated=true -diff
+composer.lock linguist-generated=true -diff
